@@ -19,8 +19,8 @@ def prepare_dataset(time_steps, data):
     dataset_range = time_steps * 32592
     custom_steps = data[data["date"] < time_steps]
 
-    X = np.array(custom_steps.drop(["final_result", "id_student"], 1))
-    Y = np.array(custom_steps.drop(["final_result"]))
+    X = np.array(custom_steps.drop(labels=['final_result','id_student'], axis = 1))
+    Y = np.array(custom_steps['final_result'])
 
     # Apply OneHotEncoder
     label_encoder = LabelEncoder()
@@ -37,15 +37,16 @@ def prepare_dataset(time_steps, data):
 
     Y_train = to_categorical(Y_train)
     Y_test = to_categorical(Y_test)
+    
 
     # Reshape data for working with
-    x_train = X_train.reshape(-1, time_steps, 71)
-    y_train = Y_train.reshape(-1, time_steps, 4)
+    X_train = X_train.reshape(-1, time_steps, 71)
+    Y_train = Y_train.reshape(-1, time_steps, 4)
 
-    x_test = X_test.reshape(-1, time_steps, 71)
-    y_test = Y_test.reshape(-1, time_steps, 4)
+    X_test = X_test.reshape(-1, time_steps, 71)
+    Y_test = Y_test.reshape(-1, time_steps, 4)
 
-    return x_train, x_test, y_train, y_test, target_strings
+    return X_train, X_test, Y_train, Y_test, target_strings
 
 
 def evaluate_model(trainX, trainY, testX, testY, timesteps, target_strings):
@@ -132,15 +133,15 @@ if __name__ == "__main__":
     # data preprocessing
     time_steps = 1
     all_accuracy = list()
-    x_train, x_test, y_train, y_test, target_strings = prepare_dataset(
+    X_train, X_test, Y_train, Y_test, target_strings = prepare_dataset(
         time_steps=time_steps, data=data
     )
 
     evaluate_model(
-        trainX=x_train,
-        trainY=y_test,
-        testX=x_test,
-        testY=y_test,
+        trainX=X_train,
+        trainY=Y_train,
+        testX=X_test,
+        testY=Y_test,
         timesteps=time_steps,
         target_strings=target_strings,
     )

@@ -2,3 +2,4 @@ environ/*
 environ
 env
 env/*
+*.csv
