@@ -11,7 +11,7 @@ from keras.models import Sequential
 from keras.layers import Dense, Dropout, LSTM
 import matplotlib.pyplot as plt
 from sklearn.metrics import classification_report as clp
-from  sklearn.metrics import accuracy_score as asc
+from sklearn.metrics import accuracy_score as asc
 
 
 def prepare_dataset(time_steps, data):
@@ -19,8 +19,8 @@ def prepare_dataset(time_steps, data):
     dataset_range = time_steps * 32592
     custom_steps = data[data["date"] < time_steps]
 
-    X = np.array(custom_steps.drop(labels=['final_result','id_student'], axis = 1))
-    Y = np.array(custom_steps['final_result'])
+    X = np.array(custom_steps.drop(labels=["final_result", "id_student"], axis=1))
+    Y = np.array(custom_steps["final_result"])
 
     # Apply OneHotEncoder
     label_encoder = LabelEncoder()
@@ -37,7 +37,6 @@ def prepare_dataset(time_steps, data):
 
     Y_train = to_categorical(Y_train)
     Y_test = to_categorical(Y_test)
-    
 
     # Reshape data for working with
     X_train = X_train.reshape(-1, time_steps, 71)
@@ -92,18 +91,6 @@ def evaluate_model(trainX, trainY, testX, testY, timesteps, target_strings):
     # Test Model
     _, accuracy = classifier.evaluate(testX, testY, batch_size=batch_size, verbose=1)
 
-    # print graph of result
-    plt.title("Categorical Acuracy")
-
-    plt.plot(history.history["categorical_accuracy"], label="train")
-    plt.plot(history.history["val_categorical_accuracy"], label="val")
-
-    plt.ylabel("categorical accuracy")
-    plt.xlabel("epoch")
-    plt.legend(["train", "val", "test"], loc="upper left")
-    plt.legend()
-    plt.show()
-
     # Predictions
     predicted = classifier.predict(testX)
     predictions = [np.round(value) for value in predicted]
@@ -113,15 +100,25 @@ def evaluate_model(trainX, trainY, testX, testY, timesteps, target_strings):
     d = np.vstack(d)
 
     report = clp(testy, d, target_names=target_strings)
-    print(report)
+    # print(report)
 
     return accuracy
 
 
-def summarize_results(scores, all_accuracy):
-    m, s = mean(scores), std(scores)
-    all_accuracy.append(m)
-    print("time steps=%d  Evaluation Accuracy: %.3f%% (+/-%.3f)" % (time_steps, m, s))
+def summarize_results(mscores, sscores, time_steps, all_accuracy):
+    print(
+        "\n time steps=%d  Evaluation Accuracy: %.3f%% (+/-%.3f)\n"
+        % (time_steps, mscores, sscores)
+    )
+    # print graph of result
+    plt.title("Categorical Accuracy")
+
+    plt.plot(all_accuracy, label="test")
+    plt.ylabel("categorical accuracy")
+    plt.xlabel("days")
+    plt.legend(["test"], loc="upper left")
+    plt.legend()
+    plt.show()
 
 
 if __name__ == "__main__":
@@ -131,17 +128,29 @@ if __name__ == "__main__":
     print(data.head())
 
     # data preprocessing
-    time_steps = 1
-    all_accuracy = list()
-    X_train, X_test, Y_train, Y_test, target_strings = prepare_dataset(
-        time_steps=time_steps, data=data
-    )
+    time_step = 0
+    scores = list()
+    accuracy = list()
+    for time_steps in range(1, 10):
+        X_train, X_test, Y_train, Y_test, target_strings = prepare_dataset(
+            time_steps=time_steps, data=data
+        )
 
-    evaluate_model(
-        trainX=X_train,
-        trainY=Y_train,
-        testX=X_test,
-        testY=Y_test,
-        timesteps=time_steps,
-        target_strings=target_strings,
+        score = evaluate_model(
+            trainX=X_train,
+            trainY=Y_train,
+            testX=X_test,
+            testY=Y_test,
+            timesteps=time_steps,
+            target_strings=target_strings,
+        )
+
+        scores.append(score)
+        time_step += 1
+
+    summarize_results(
+        time_steps=time_step, 
+        all_accuracy=scores, 
+        mscores=mean(scores), 
+        sscores=std(scores)
     )
